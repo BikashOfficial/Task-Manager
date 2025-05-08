@@ -124,29 +124,342 @@ Backend/
 
 ## 🔌 API Documentation
 
-### Authentication Endpoints
-\`\`\`http
-POST /api/auth/register
-Content-Type: application/json
+## Base URL
+```
+http://localhost:8000/api
+```
 
+## Authentication Endpoints
+
+### Register User
+```http
+POST /auth/register
+
+Request Body:
 {
-    "name": "string",
-    "email": "string",
-    "password": "string",
-    "profileImageUrl": "string?",
-    "adminInviteToken": "string?"
+    "name": "string (required)",
+    "email": "string (required)",
+    "password": "string (required)",
+    "profileImageUrl": "string (optional)",
+    "adminInviteToken": "string (optional - required for admin registration)"
 }
 
-Response: {
+Response (201):
+{
+    "_id": "string",
+    "name": "string",
+    "email": "string",
+    "role": "admin|member",
+    "profileImageUrl": "string",
+    "token": "JWT token"
+}
+```
+
+### Login
+```http
+POST /auth/login
+
+Request Body:
+{
+    "email": "string (required)",
+    "password": "string (required)"
+}
+
+Response (201):
+{
+    "_id": "string",
+    "name": "string",
+    "email": "string",
+    "role": "admin|member",
+    "profileImageUrl": "string",
+    "token": "JWT token"
+}
+```
+
+### Get User Profile
+```http
+GET /auth/profile
+Authorization: Bearer {token}
+
+Response (200):
+{
     "_id": "string",
     "name": "string",
     "email": "string",
     "role": "string",
-    "token": "string"
+    "profileImageUrl": "string"
 }
-\`\`\`
+```
 
-[Additional endpoint documentation follows similar format...]
+### Update User Profile
+```http
+PUT /auth/profile
+Authorization: Bearer {token}
+
+Request Body:
+{
+    "name": "string (optional)",
+    "email": "string (optional)",
+    "password": "string (optional)"
+}
+
+Response (200):
+{
+    "_id": "string",
+    "name": "string",
+    "email": "string",
+    "role": "string",
+    "token": "JWT token"
+}
+```
+
+### Upload Profile Image
+```http
+POST /auth/upload-image
+Content-Type: multipart/form-data
+
+Request Body:
+- image: File (jpg, jpeg, png)
+
+Response (200):
+{
+    "imageUrl": "string"
+}
+```
+
+## Task Endpoints
+
+### Get All Tasks
+```http
+GET /tasks
+Authorization: Bearer {token}
+Query Parameters:
+- status: "Pending|InProgress|Completed" (optional)
+
+Response (200):
+{
+    "tasks": [{
+        "_id": "string",
+        "title": "string",
+        "description": "string",
+        "priority": "Low|Medium|High",
+        "status": "Pending|InProgress|Completed",
+        "dueDate": "Date",
+        "assignedTo": [{
+            "_id": "string",
+            "name": "string",
+            "email": "string",
+            "profileImageUrl": "string"
+        }],
+        "createdBy": "string",
+        "attachments": ["string"],
+        "todoChecklist": [{
+            "text": "string",
+            "completed": "boolean"
+        }],
+        "progress": "number",
+        "completedTodoCount": "number"
+    }],
+    "statusSummary": {
+        "all": "number",
+        "pendingTasks": "number",
+        "inProgressTasks": "number",
+        "completedTasks": "number"
+    }
+}
+```
+
+### Create Task (Admin Only)
+```http
+POST /tasks
+Authorization: Bearer {token}
+
+Request Body:
+{
+    "title": "string (required)",
+    "description": "string (required)",
+    "priority": "Low|Medium|High (required)",
+    "dueDate": "Date (required)",
+    "assignedTo": ["userId"] (required),
+    "attachments": ["string"] (optional),
+    "todoChecklist": [{
+        "text": "string",
+        "completed": false
+    }] (optional)
+}
+
+Response (201):
+{
+    "message": "Task created successfully",
+    "task": {Task Object}
+}
+```
+
+### Update Task Status
+```http
+PUT /tasks/:id/status
+Authorization: Bearer {token}
+
+Request Body:
+{
+    "status": "Pending|InProgress|Completed"
+}
+
+Response (200):
+{
+    "message": "Task status Updated",
+    "task": {Task Object}
+}
+```
+
+### Update Task Checklist
+```http
+PUT /tasks/:id/todo
+Authorization: Bearer {token}
+
+Request Body:
+{
+    "todoChecklist": [{
+        "text": "string",
+        "completed": "boolean"
+    }]
+}
+
+Response (200):
+{
+    "message": "Task Checklist updated",
+    "task": {Task Object}
+}
+```
+
+### Get Dashboard Data
+```http
+GET /tasks/dashboard-data
+Authorization: Bearer {token}
+
+Response (200):
+{
+    "statistics": {
+        "totalTasks": "number",
+        "pendingTasks": "number",
+        "completedTasks": "number",
+        "overdueTasks": "number"
+    },
+    "charts": {
+        "taskDistribution": {
+            "Pending": "number",
+            "InProgress": "number",
+            "Completed": "number",
+            "All": "number"
+        },
+        "taskPriorityLevels": {
+            "Low": "number",
+            "Medium": "number",
+            "High": "number"
+        }
+    },
+    "recentTasks": [Task Objects]
+}
+```
+
+## User Management Endpoints
+
+### Get All Users (Admin Only)
+```http
+GET /users
+Authorization: Bearer {token}
+
+Response (200):
+[{
+    "_id": "string",
+    "name": "string",
+    "email": "string",
+    "profileImageUrl": "string",
+    "role": "string",
+    "pendingTasks": "number",
+    "inProgressTasks": "number",
+    "completedTasks": "number"
+}]
+```
+
+### Get User by ID
+```http
+GET /users/:id
+Authorization: Bearer {token}
+
+Response (200):
+{
+    "_id": "string",
+    "name": "string",
+    "email": "string",
+    "profileImageUrl": "string",
+    "role": "string"
+}
+```
+
+## Report Endpoints (Admin Only)
+
+### Export Tasks Report
+```http
+GET /reports/export/tasks
+Authorization: Bearer {token}
+
+Response: Excel file with task details
+```
+
+### Export Users Report
+```http
+GET /reports/export/users
+Authorization: Bearer {token}
+
+Response: Excel file with user-task statistics
+```
+
+## Error Responses
+
+All endpoints may return these error responses:
+
+### 401 Unauthorized
+```json
+{
+    "message": "Not authorized, no token found"
+}
+// or
+{
+    "message": "Token failed"
+}
+```
+
+### 403 Forbidden
+```json
+{
+    "message": "Access denied, admin only"
+}
+```
+
+### 400 Bad Request
+```json
+{
+    "message": "Error description"
+}
+```
+
+### 500 Server Error
+```json
+{
+    "message": "Server error",
+    "error": "Error details"
+}
+```
+
+## Authentication
+
+All protected endpoints require the following header:
+```http
+Authorization: Bearer {jwt_token}
+```
+
+The JWT token is obtained from the login or register endpoints and should be included in all subsequent requests to protected endpoints.
 
 ## 💾 Database Schema
 
@@ -325,24 +638,5 @@ Response: {
    - Include screenshots for UI changes
    - Link related issues
    - Request review from maintainers
-
-<!-- ## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Team
-
-- Project Lead: [Your Name]
-- Frontend Developer: [Name]
-- Backend Developer: [Name]
-- UI/UX Designer: [Name]
-
-## 📞 Support
-
-For support, please:
-1. Check the documentation
-2. Search existing issues
-3. Create a new issue
-4. Contact: support@taskmanager.com -->
 
 ---
