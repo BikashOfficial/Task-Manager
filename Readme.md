@@ -1,6 +1,6 @@
 # Task Manager Application
 
-![Task Manager Banner](Frontend/public/header_img.png)
+![Task Manager Banner](Frontend/public/image.png)
 
 A comprehensive full-stack task management application built with React.js and Node.js. This application enables teams to efficiently organize tasks, track progress, and collaborate effectively with role-based access control.
 
